@@ -1,14 +1,34 @@
 // Subjects List
 const subjects = ['evidence', 'labour', 'arbitration', 'jurisprudence', 'competition'];
 
+// Logging and Error Handling
+function safeLocalStorageSet(key, value) {
+    try {
+        localStorage.setItem(key, value);
+        console.log(`Saved ${key}: ${value}`);
+    } catch (error) {
+        console.error(`localStorage error setting ${key}:`, error);
+    }
+}
+
+function safeLocalStorageGet(key, defaultValue = '0') {
+    try {
+        const value = localStorage.getItem(key);
+        return value !== null ? value : defaultValue;
+    } catch (error) {
+        console.error(`localStorage error getting ${key}:`, error);
+        return defaultValue;
+    }
+}
+
 // Function to update attendance
 function updateAttendance(subject, type) {
     const attendedElement = document.querySelector(`#${subject} .attended`);
     const totalElement = document.querySelector(`#${subject} .total`);
     const percentageElement = document.querySelector(`#${subject} .percentage`);
 
-    let attendedCount = parseInt(attendedElement.textContent);
-    let totalCount = parseInt(totalElement.textContent);
+    let attendedCount = parseInt(attendedElement.textContent || '0');
+    let totalCount = parseInt(totalElement.textContent || '0');
 
     if (type === 'present') {
         attendedCount++;
@@ -27,10 +47,10 @@ function updateAttendance(subject, type) {
         : 0;
     percentageElement.textContent = percentage;
 
-    // Save to localStorage
-    localStorage.setItem(`${subject}_attended`, attendedCount);
-    localStorage.setItem(`${subject}_total`, totalCount);
-    localStorage.setItem(`${subject}_percentage`, percentage);
+    // Safe localStorage saving
+    safeLocalStorageSet(`${subject}_attended`, attendedCount.toString());
+    safeLocalStorageSet(`${subject}_total`, totalCount.toString());
+    safeLocalStorageSet(`${subject}_percentage`, percentage.toString());
 
     // Update overall attendance
     updateOverallAttendance();
@@ -45,8 +65,8 @@ function updateOverallAttendance() {
         const attendedElement = document.querySelector(`#${subject} .attended`);
         const totalElement = document.querySelector(`#${subject} .total`);
         
-        totalAttended += parseInt(attendedElement.textContent);
-        totalLectures += parseInt(totalElement.textContent);
+        totalAttended += parseInt(attendedElement.textContent || '0');
+        totalLectures += parseInt(totalElement.textContent || '0');
     });
 
     const overallPercentage = totalLectures > 0 
@@ -59,22 +79,24 @@ function updateOverallAttendance() {
 
 // Function to restore attendance from localStorage
 function restoreAttendance() {
+    console.log("Restoring attendance data...");
+    
+    // Check localStorage support
+    if (!window.localStorage) {
+        console.error("localStorage is not supported");
+        return;
+    }
+
     subjects.forEach(subject => {
-        const savedAttended = localStorage.getItem(`${subject}_attended`);
-        const savedTotal = localStorage.getItem(`${subject}_total`);
-        const savedPercentage = localStorage.getItem(`${subject}_percentage`);
+        const savedAttended = safeLocalStorageGet(`${subject}_attended`);
+        const savedTotal = safeLocalStorageGet(`${subject}_total`);
+        const savedPercentage = safeLocalStorageGet(`${subject}_percentage`);
 
-        if (savedAttended !== null) {
-            document.querySelector(`#${subject} .attended`).textContent = savedAttended;
-        }
+        console.log(`Restored ${subject}: Attended=${savedAttended}, Total=${savedTotal}`);
 
-        if (savedTotal !== null) {
-            document.querySelector(`#${subject} .total`).textContent = savedTotal;
-        }
-
-        if (savedPercentage !== null) {
-            document.querySelector(`#${subject} .percentage`).textContent = savedPercentage;
-        }
+        document.querySelector(`#${subject} .attended`).textContent = savedAttended;
+        document.querySelector(`#${subject} .total`).textContent = savedTotal;
+        document.querySelector(`#${subject} .percentage`).textContent = savedPercentage;
     });
 
     // Update overall attendance after restoring
@@ -82,41 +104,51 @@ function restoreAttendance() {
 }
 
 // Event Listeners for Buttons
-subjects.forEach(subject => {
-    document.querySelector(`#${subject} .present`).addEventListener('click', () => updateAttendance(subject, 'present'));
-    document.querySelector(`#${subject} .absent`).addEventListener('click', () => updateAttendance(subject, 'absent'));
-    document.querySelector(`#${subject} .no-lecture`).addEventListener('click', () => updateAttendance(subject, 'no-lecture'));
+function setupEventListeners() {
+    subjects.forEach(subject => {
+        document.querySelector(`#${subject} .present`).addEventListener('click', () => updateAttendance(subject, 'present'));
+        document.querySelector(`#${subject} .absent`).addEventListener('click', () => updateAttendance(subject, 'absent'));
+        document.querySelector(`#${subject} .no-lecture`).addEventListener('click', () => updateAttendance(subject, 'no-lecture'));
+        
+        // Minus buttons for attended
+        document.querySelector(`#${subject} .attended-minus`).addEventListener('click', () => {
+            const attendedElement = document.querySelector(`#${subject} .attended`);
+            let attendedCount = parseInt(attendedElement.textContent || '0');
+            if (attendedCount > 0) {
+                attendedCount--;
+                attendedElement.textContent = attendedCount;
+                safeLocalStorageSet(`${subject}_attended`, attendedCount.toString());
+                updateOverallAttendance();
+            }
+        });
+
+        // Minus buttons for total
+        document.querySelector(`#${subject} .total-minus`).addEventListener('click', () => {
+            const totalElement = document.querySelector(`#${subject} .total`);
+            let totalCount = parseInt(totalElement.textContent || '0');
+            if (totalCount > 0) {
+                totalCount--;
+                totalElement.textContent = totalCount;
+                safeLocalStorageSet(`${subject}_total`, totalCount.toString());
+                updateOverallAttendance();
+            }
+        });
+    });
+}
+
+// Initialize on DOM Load
+document.addEventListener('DOMContentLoaded', () => {
+    console.log("DOM Loaded. Initializing...");
     
-    // Minus buttons for attended
-    document.querySelector(`#${subject} .attended-minus`).addEventListener('click', () => {
-        const attendedElement = document.querySelector(`#${subject} .attended`);
-        let attendedCount = parseInt(attendedElement.textContent);
-        if (attendedCount > 0) {
-            attendedCount--;
-            attendedElement.textContent = attendedCount;
-            
-            // Update localStorage
-            localStorage.setItem(`${subject}_attended`, attendedCount);
-            
-            updateOverallAttendance();
-        }
-    });
+    // Check localStorage support
+    if (!window.localStorage) {
+        console.error("localStorage is not supported in this browser");
+        return;
+    }
 
-    // Minus buttons for total
-    document.querySelector(`#${subject} .total-minus`).addEventListener('click', () => {
-        const totalElement = document.querySelector(`#${subject} .total`);
-        let totalCount = parseInt(totalElement.textContent);
-        if (totalCount > 0) {
-            totalCount--;
-            totalElement.textContent = totalCount;
-            
-            // Update localStorage
-            localStorage.setItem(`${subject}_total`, totalCount);
-            
-            updateOverallAttendance();
-        }
-    });
+    // Setup event listeners
+    setupEventListeners();
+
+    // Restore previous attendance
+    restoreAttendance();
 });
-
-// Restore attendance on page load
-document.addEventListener('DOMContentLoaded', restoreAttendance);
