@@ -1,54 +1,122 @@
-const subjects = ["evidence", "labour", "arbitration", "jurisprudence", "competition"];
+// Subjects List
+const subjects = ['evidence', 'labour', 'arbitration', 'jurisprudence', 'competition'];
 
-let overallAttended = 0;
-let overallTotal = 0;
+// Function to update attendance
+function updateAttendance(subject, type) {
+    const attendedElement = document.querySelector(`#${subject} .attended`);
+    const totalElement = document.querySelector(`#${subject} .total`);
+    const percentageElement = document.querySelector(`#${subject} .percentage`);
 
-function updateStats(subject) {
-  const subjectElement = document.getElementById(subject);
-  const attended = parseInt(subjectElement.querySelector(".attended").textContent);
-  const total = parseInt(subjectElement.querySelector(".total").textContent);
-  const percentage = total > 0 ? ((attended / total) * 100).toFixed(2) : 0;
-  subjectElement.querySelector(".percentage").textContent = `${percentage}%`;
+    let attendedCount = parseInt(attendedElement.textContent);
+    let totalCount = parseInt(totalElement.textContent);
 
-  overallAttended = subjects.reduce((sum, subj) => {
-    return sum + parseInt(document.getElementById(subj).querySelector(".attended").textContent);
-  }, 0);
+    if (type === 'present') {
+        attendedCount++;
+        totalCount++;
+    } else if (type === 'absent') {
+        totalCount++;
+    }
 
-  overallTotal = subjects.reduce((sum, subj) => {
-    return sum + parseInt(document.getElementById(subj).querySelector(".total").textContent);
-  }, 0);
+    // Update local elements
+    attendedElement.textContent = attendedCount;
+    totalElement.textContent = totalCount;
+    
+    // Calculate percentage
+    const percentage = totalCount > 0 
+        ? Math.round((attendedCount / totalCount) * 100) 
+        : 0;
+    percentageElement.textContent = percentage;
 
-  const overallPercentage = overallTotal > 0 ? ((overallAttended / overallTotal) * 100).toFixed(2) : 0;
-  document.getElementById("overall-attendance").textContent = `Overall Attendance: ${overallPercentage}%`;
+    // Save to localStorage
+    localStorage.setItem(`${subject}_attended`, attendedCount);
+    localStorage.setItem(`${subject}_total`, totalCount);
+    localStorage.setItem(`${subject}_percentage`, percentage);
+
+    // Update overall attendance
+    updateOverallAttendance();
 }
 
-function handleButtonClick(event) {
-  const button = event.target;
-  const subjectElement = button.closest(".subject");
-  const attendedElement = subjectElement.querySelector(".attended");
-  const totalElement = subjectElement.querySelector(".total");
-  let attended = parseInt(attendedElement.textContent);
-  let total = parseInt(totalElement.textContent);
+// Function to update overall attendance
+function updateOverallAttendance() {
+    let totalAttended = 0;
+    let totalLectures = 0;
 
-  if (button.classList.contains("present")) {
-    attended += 1;
-    total += 1;
-  } else if (button.classList.contains("absent")) {
-    total += 1;
-  } else if (button.classList.contains("attended-minus") && attended > 0) {
-    attended -= 1;
-  } else if (button.classList.contains("total-minus") && total > 0) {
-    total -= 1;
-    if (attended > total) attended = total; // Ensure "attended" is not greater than "total"
-  }
+    subjects.forEach(subject => {
+        const attendedElement = document.querySelector(`#${subject} .attended`);
+        const totalElement = document.querySelector(`#${subject} .total`);
+        
+        totalAttended += parseInt(attendedElement.textContent);
+        totalLectures += parseInt(totalElement.textContent);
+    });
 
-  attendedElement.textContent = attended;
-  totalElement.textContent = total;
+    const overallPercentage = totalLectures > 0 
+        ? Math.round((totalAttended / totalLectures) * 100) 
+        : 0;
 
-  const subject = subjectElement.id;
-  updateStats(subject);
+    document.getElementById('overall-attendance').textContent = 
+        `Overall Attendance: ${overallPercentage}%`;
 }
 
-document.querySelectorAll("button").forEach(button => {
-  button.addEventListener("click", handleButtonClick);
+// Function to restore attendance from localStorage
+function restoreAttendance() {
+    subjects.forEach(subject => {
+        const savedAttended = localStorage.getItem(`${subject}_attended`);
+        const savedTotal = localStorage.getItem(`${subject}_total`);
+        const savedPercentage = localStorage.getItem(`${subject}_percentage`);
+
+        if (savedAttended !== null) {
+            document.querySelector(`#${subject} .attended`).textContent = savedAttended;
+        }
+
+        if (savedTotal !== null) {
+            document.querySelector(`#${subject} .total`).textContent = savedTotal;
+        }
+
+        if (savedPercentage !== null) {
+            document.querySelector(`#${subject} .percentage`).textContent = savedPercentage;
+        }
+    });
+
+    // Update overall attendance after restoring
+    updateOverallAttendance();
+}
+
+// Event Listeners for Buttons
+subjects.forEach(subject => {
+    document.querySelector(`#${subject} .present`).addEventListener('click', () => updateAttendance(subject, 'present'));
+    document.querySelector(`#${subject} .absent`).addEventListener('click', () => updateAttendance(subject, 'absent'));
+    document.querySelector(`#${subject} .no-lecture`).addEventListener('click', () => updateAttendance(subject, 'no-lecture'));
+    
+    // Minus buttons for attended
+    document.querySelector(`#${subject} .attended-minus`).addEventListener('click', () => {
+        const attendedElement = document.querySelector(`#${subject} .attended`);
+        let attendedCount = parseInt(attendedElement.textContent);
+        if (attendedCount > 0) {
+            attendedCount--;
+            attendedElement.textContent = attendedCount;
+            
+            // Update localStorage
+            localStorage.setItem(`${subject}_attended`, attendedCount);
+            
+            updateOverallAttendance();
+        }
+    });
+
+    // Minus buttons for total
+    document.querySelector(`#${subject} .total-minus`).addEventListener('click', () => {
+        const totalElement = document.querySelector(`#${subject} .total`);
+        let totalCount = parseInt(totalElement.textContent);
+        if (totalCount > 0) {
+            totalCount--;
+            totalElement.textContent = totalCount;
+            
+            // Update localStorage
+            localStorage.setItem(`${subject}_total`, totalCount);
+            
+            updateOverallAttendance();
+        }
+    });
 });
+
+// Restore attendance on page load
+document.addEventListener('DOMContentLoaded', restoreAttendance);
