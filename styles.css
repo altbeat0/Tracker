@@ -12,6 +12,7 @@
 * {
     box-sizing: border-box;
     transition: all 0.3s ease;
+    touch-action: manipulation; /* Added to prevent double-tap zoom */
 }
 
 body {
@@ -120,4 +121,9 @@ main {
     main {
         grid-template-columns: 1fr;
     }
+}
+
+/* Optional: Additional touch-action for specific interactive elements */
+button, input {
+    touch-action: manipulation;
 }
