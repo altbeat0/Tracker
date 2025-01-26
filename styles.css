@@ -123,41 +123,4 @@ main {
     }
 }
 
-/* Optional: Additional touch-action for specific interactive elements */
-button, input {
-    touch-action: manipulation;
-}
-
-// Prevent double-tap zoom globally
-document.addEventListener("dblclick", function(event) {
-    event.preventDefault();
-}, { passive: false });
-
-// Prevent double submissions and add delay to buttons
-document.querySelectorAll('button').forEach(button => {
-    button.addEventListener('click', function(e) {
-        // Temporarily disable button to prevent multiple clicks
-        this.disabled = true;
-        setTimeout(() => {
-            this.disabled = false;
-        }, 1000);
-    });
-});
-
-// Optional: Prevent zoom on form inputs
-document.querySelectorAll('input, textarea').forEach(input => {
-    input.addEventListener('focus', function() {
-        this.setAttribute('readonly', true);
-        setTimeout(() => {
-            this.removeAttribute('readonly');
-        }, 500);
-    });
-});
-
-// Prevent default zoom behavior on mobile
-document.addEventListener('touchmove', function(e) {
-    if (e.scale !== 1) { 
-        e.preventDefault(); 
-    }
-}, { passive: false });
 
