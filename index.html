@@ -6,7 +6,7 @@
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="Attendance">
-    <link rel="apple-touch-icon" href="/logo.png">
+    <link rel="apple-touch-icon" href="https://cdn-icons-png.flaticon.com/512/2620/2620267.png">
     <title>Attendance Tracker</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.7.0/chart.min.js"></script>
     <style>
@@ -131,6 +131,7 @@
         .attendance-controls {
             display: flex;
             gap: 10px;
+            align-items: center;
         }
 
         .attendance-btn {
@@ -226,6 +227,22 @@
             transition: all 0.3s ease;
         }
 
+        .marking-status {
+            color: #22c55e;
+            font-size: 14px;
+            opacity: 0;
+            transition: opacity 0.3s;
+            margin-left: 10px;
+        }
+
+        .marking-status.visible {
+            opacity: 1;
+        }
+
+        .marking-status .tick {
+            margin-right: 4px;
+        }
+
 
           /* Add to existing styles */
           @media (display-mode: standalone) {
@@ -273,7 +290,9 @@
                 <div class="attendance-controls">
                     <button class="attendance-btn present" onclick="markAttendance(this, 'present')">present</button>
                     <button class="attendance-btn absent" onclick="markAttendance(this, 'absent')">absent</button>
+                    <span class="marking-status"><span class="tick">✓</span>marked</span>
                 </div>
+               
             </div>
 
             <div class="subject-card" data-subject="labour">
@@ -297,8 +316,11 @@
                 <div class="attendance-controls">
                     <button class="attendance-btn present" onclick="markAttendance(this, 'present')">present</button>
                     <button class="attendance-btn absent" onclick="markAttendance(this, 'absent')">absent</button>
+                    <span class="marking-status"><span class="tick">✓</span>marked</span>
                 </div>
+    
             </div>
+            
 
             <div class="subject-card" data-subject="adr">
                 <h3 class="subject-title" onclick="editSubjectName(this)">adr</h3>
@@ -321,7 +343,9 @@
                 <div class="attendance-controls">
                     <button class="attendance-btn present" onclick="markAttendance(this, 'present')">present</button>
                     <button class="attendance-btn absent" onclick="markAttendance(this, 'absent')">absent</button>
+                    <span class="marking-status"><span class="tick">✓</span>marked</span>
                 </div>
+                
             </div>
 
             <div class="subject-card" data-subject="jurisprudence">
@@ -345,7 +369,9 @@
                 <div class="attendance-controls">
                     <button class="attendance-btn present" onclick="markAttendance(this, 'present')">present</button>
                     <button class="attendance-btn absent" onclick="markAttendance(this, 'absent')">absent</button>
+                    <span class="marking-status"><span class="tick">✓</span>marked</span>
                 </div>
+
             </div>
 
             <div class="subject-card" data-subject="optional">
@@ -369,6 +395,8 @@
                 <div class="attendance-controls">
                     <button class="attendance-btn present" onclick="markAttendance(this, 'present')">present</button>
                     <button class="attendance-btn absent" onclick="markAttendance(this, 'absent')">absent</button>
+                    <span class="marking-status"><span class="tick">✓</span>marked</span>
+
                 </div>
             </div>
         </div>
@@ -629,6 +657,73 @@ function loadData() {
     }
 );
     
+// Function to check if a date is today
+function isToday(date) {
+    const today = new Date();
+    return date.getDate() === today.getDate() &&
+        date.getMonth() === today.getMonth() &&
+        date.getFullYear() === today.getFullYear();
+}
+
+// Function to show marking status
+function showMarkingStatus(card) {
+    const markingStatus = card.querySelector('.marking-status');
+    markingStatus.classList.add('visible');
+    
+    // Save the marking timestamp
+    const subject = card.dataset.subject;
+    const markings = JSON.parse(localStorage.getItem('markingTimestamps') || '{}');
+    markings[subject] = new Date().toISOString();
+    localStorage.setItem('markingTimestamps', JSON.stringify(markings));
+}
+
+// Function to check and reset markings
+function checkAndResetMarkings() {
+    const markings = JSON.parse(localStorage.getItem('markingTimestamps') || '{}');
+    const markingStatuses = document.querySelectorAll('.marking-status');
+    
+    Object.entries(markings).forEach(([subject, timestamp]) => {
+        const date = new Date(timestamp);
+        const card = document.querySelector(`[data-subject="${subject}"]`);
+        const markingStatus = card?.querySelector('.marking-status');
+        
+        if (markingStatus && isToday(date)) {
+            markingStatus.classList.add('visible');
+        } else {
+            markingStatus?.classList.remove('visible');
+        }
+    });
+}
+
+// Modify markAttendance function to include marking status
+function markAttendance(btn, status) {
+    const card = btn.closest('.subject-card');
+    const attended = card.querySelector('.attended');
+    const total = card.querySelector('.total');
+
+    if (status === 'present') {
+        attended.textContent = parseInt(attended.textContent) + 1;
+    }
+    total.textContent = parseInt(total.textContent) + 1;
+
+    updatePercentages(card);
+    showMarkingStatus(card); // Add this line
+}
+
+// Check markings on page load and set up daily reset
+window.addEventListener('load', () => {
+    checkAndResetMarkings();
+    
+    // Check every minute if we need to reset markings
+    setInterval(() => {
+        const now = new Date();
+        if (now.getHours() === 0 && now.getMinutes() === 0) {
+            const markingStatuses = document.querySelectorAll('.marking-status');
+            markingStatuses.forEach(status => status.classList.remove('visible'));
+            localStorage.removeItem('markingTimestamps');
+        }
+    }, 60000); // Check every minute
+});
 </script>
 </body>
-</html>
+</html
