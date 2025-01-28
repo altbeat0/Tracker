@@ -3,103 +3,632 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    
-    <!-- iOS Web App Meta Tags -->
     <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="default">
-    
-    <!-- Optional: Add your app icon when you have one -->
-    <link rel="apple-touch-icon" href="https://icon-library.com/images/attendance-icon/attendance-icon-25.jpg">
-    
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Attendance">
+    <link rel="apple-touch-icon" href="/logo.png">
     <title>Attendance Tracker</title>
-    <link rel="stylesheet" href="styles.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.7.0/chart.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: system-ui, -apple-system, sans-serif;
+        }
+
+        body {
+            background-color: #1a1a1a;
+            color: #ffffff;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        .attendance-header {
+            display: flex;
+            justify-content: center; /* Center-align header */
+            margin-bottom: 20px;
+            gap: 20px;
+        }
+
+        .attendance-header h2 {
+            font-size: 40px;
+            font-weight: 400;
+            margin-top: 15px;
+        }
+
+        .overall-progress {
+            width: 80px;
+            height: 80px;
+            position: relative;
+        }
+
+        .action-buttons {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 30px;
+            justify-content: center;
+        }
+
+        .btn {
+            padding: 8px 16px;
+            border: none;
+            border-radius: 20px;
+            color: white;
+            cursor: pointer;
+            font-size: 14px;
+            transition: opacity 0.2s;
+        }
+
+        .btn:hover {
+            opacity: 0.9;
+        }
+
+        .btn-present {
+            background-color: #22c55e;
+        }
+
+        .btn-absent {
+            background-color: #ef4444;
+        }
+
+        .btn-medical {
+            background-color: #d6a30a;
+        }
+
+        .subject-card {
+            background-color: #27272a;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 15px;
+        }
+
+        .subject-title {
+            font-size: 20px;
+            font-weight: 400;
+            margin-bottom: 15px;
+            cursor: pointer;
+        }
+
+        .subject-stats {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            margin-bottom: 15px;
+        }
+
+        .stat-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .stat-label {
+            color: #a1a1aa;
+        }
+
+        .minus-btn {
+            background-color: #ef4444;
+            border: none;
+            cursor: pointer;
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 20px;
+            padding-bottom: 3px;
+            user-select: none;
+        }
+
+        .attendance-controls {
+            display: flex;
+            gap: 10px;
+        }
+
+        .attendance-btn {
+            padding: 8px 16px;
+            border: none;
+            border-radius: 20px;
+            color: white;
+            cursor: pointer;
+            font-size: 14px;
+            transition: opacity 0.2s;
+        }
+
+        .attendance-btn.present {
+            background-color: #22c55e;
+        }
+
+        .attendance-btn.absent {
+            background-color: #ef4444;
+        }
+
+        .subject-progress {
+            width: 75px;
+            height: 40px;
+            margin-left: auto;
+            margin-top: -30px;
+            position: relative;
+        }
+
+        .username {
+            color: #a1a1aa;
+            font-size: 14px;
+            margin-top: 20px;
+            text-align: right;
+        }
+
+        .medical-dates {
+            margin-top: 0px;
+            color: #a1a1aa;
+            font-size: 14px;
+        }
+
+        .medical-dates ul {
+            list-style: none;
+            margin-top: 0px;
+        }
+
+        .medical-dates li {
+            margin-bottom: 5px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .delete-date {
+            background: none;
+            border: none;
+            color: #ef4444;
+            cursor: pointer;
+            padding: 2px 8px;
+            font-size: 14px;
+        }
+
+        .delete-date:hover {
+            opacity: 0.8;
+        }
+
+        .progress-circle {
+            position: relative;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            
+        }
+
+        .progress-value {
+            position: absolute;
+            font-size: 16px;
+            font-weight: 500;
+        }
+
+            .medical-toggle-btn {
+                background-color: #d6a30a;
+                color: white;
+                padding: 8px 16px;
+                border: none;
+                border-radius: 20px;
+                cursor: pointer;
+                margin-bottom: 10px;
+                
+            }
+
+        .medical-dates-container {
+            transition: all 0.3s ease;
+        }
+
+
+          /* Add to existing styles */
+          @media (display-mode: standalone) {
+            body {
+                padding-top: 40px; /* Add padding for iOS status bar */
+            }
+        }
+    </style>
 </head>
 <body>
-    <header>
-        <h1 id="overall-attendance">Overall Attendance: 0%</h1>
-    </header>
-    <main>
-        <div class="subject" id="evidence">
-            <h2>Evidence</h2>
-            <div class="stats">
-                <span>Attended: <span class="attended">0</span></span>
-                <button class="minus attended-minus">-</button>
-                <span>Total Lectures: <span class="total">0</span></span>
-                <button class="minus total-minus">-</button>
-                <span>Percentage: <span class="percentage">0%</span></span>
-            </div>
-            <div class="buttons">
-                <button class="present">Present</button>
-                <button class="absent">Absent</button>
-                <button class="no-lecture">No Lecture</button>
+    <div class="container">
+        <div class="attendance-header">
+            <h2>attendance:</h2>
+            <div class="overall-progress progress-circle">
+                <canvas id="overallChart"></canvas>
+                <span class="progress-value">0%</span>
             </div>
         </div>
 
-        <div class="subject" id="labour">
-            <h2>Labour</h2>
-            <div class="stats">
-                <span>Attended: <span class="attended">0</span></span>
-                <button class="minus attended-minus">-</button>
-                <span>Total Lectures: <span class="total">0</span></span>
-                <button class="minus total-minus">-</button>
-                <span>Percentage: <span class="percentage">0%</span></span>
+        <div class="action-buttons">
+            <button class="btn btn-present" onclick="markAllPresent()">all present</button>
+            <button class="btn btn-absent" onclick="markAllAbsent()">all absent</button>
+            <button class="btn btn-medical" onclick="markMedical()">mark for medical</button>
+        </div>
+
+        <div class="subjects">
+            <div class="subject-card" data-subject="evidence">
+                <h3 class="subject-title" contenteditable="true">evidence</h3>
+                <div class="subject-stats">
+                    <div class="stat-item">
+                        <span class="stat-label">attended:</span>
+                        <span class="attended">0</span>
+                        <button class="minus-btn" onclick="decrementAttended(this)">−</button>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">total:</span>
+                        <span class="total">0</span>
+                        <button class="minus-btn" onclick="decrementTotal(this)">−</button>
+                    </div>
+                    <div class="subject-progress progress-circle">
+                        <canvas class="subject-chart"></canvas>
+                        <span class="progress-value">0%</span>
+                    </div>
+                </div>
+                <div class="attendance-controls">
+                    <button class="attendance-btn present" onclick="markAttendance(this, 'present')">present</button>
+                    <button class="attendance-btn absent" onclick="markAttendance(this, 'absent')">absent</button>
+                </div>
             </div>
-            <div class="buttons">
-                <button class="present">Present</button>
-                <button class="absent">Absent</button>
-                <button class="no-lecture">No Lecture</button>
+
+            <div class="subject-card" data-subject="labour">
+                <h3 class="subject-title" onclick="editSubjectName(this)">labour</h3>
+                <div class="subject-stats">
+                    <div class="stat-item">
+                        <span class="stat-label">attended:</span>
+                        <span class="attended">0</span>
+                        <button class="minus-btn" onclick="decrementAttended(this)">−</button>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">total:</span>
+                        <span class="total">0</span>
+                        <button class="minus-btn" onclick="decrementTotal(this)">−</button>
+                    </div>
+                    <div class="subject-progress progress-circle">
+                        <canvas class="subject-chart"></canvas>
+                        <span class="progress-value">0%</span>
+                    </div>
+                </div>
+                <div class="attendance-controls">
+                    <button class="attendance-btn present" onclick="markAttendance(this, 'present')">present</button>
+                    <button class="attendance-btn absent" onclick="markAttendance(this, 'absent')">absent</button>
+                </div>
+            </div>
+
+            <div class="subject-card" data-subject="adr">
+                <h3 class="subject-title" onclick="editSubjectName(this)">adr</h3>
+                <div class="subject-stats">
+                    <div class="stat-item">
+                        <span class="stat-label">attended:</span>
+                        <span class="attended">0</span>
+                        <button class="minus-btn" onclick="decrementAttended(this)">−</button>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">total:</span>
+                        <span class="total">0</span>
+                        <button class="minus-btn" onclick="decrementTotal(this)">−</button>
+                    </div>
+                    <div class="subject-progress progress-circle">
+                        <canvas class="subject-chart"></canvas>
+                        <span class="progress-value">0%</span>
+                    </div>
+                </div>
+                <div class="attendance-controls">
+                    <button class="attendance-btn present" onclick="markAttendance(this, 'present')">present</button>
+                    <button class="attendance-btn absent" onclick="markAttendance(this, 'absent')">absent</button>
+                </div>
+            </div>
+
+            <div class="subject-card" data-subject="jurisprudence">
+                <h3 class="subject-title" onclick="editSubjectName(this)">jurisprudence</h3>
+                <div class="subject-stats">
+                    <div class="stat-item">
+                        <span class="stat-label">attended:</span>
+                        <span class="attended">0</span>
+                        <button class="minus-btn" onclick="decrementAttended(this)">−</button>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">total:</span>
+                        <span class="total">0</span>
+                        <button class="minus-btn" onclick="decrementTotal(this)">−</button>
+                    </div>
+                    <div class="subject-progress progress-circle">
+                        <canvas class="subject-chart"></canvas>
+                        <span class="progress-value">0%</span>
+                    </div>
+                </div>
+                <div class="attendance-controls">
+                    <button class="attendance-btn present" onclick="markAttendance(this, 'present')">present</button>
+                    <button class="attendance-btn absent" onclick="markAttendance(this, 'absent')">absent</button>
+                </div>
+            </div>
+
+            <div class="subject-card" data-subject="optional">
+                <h3 class="subject-title" onclick="editSubjectName(this)">optional</h3>
+                <div class="subject-stats">
+                    <div class="stat-item">
+                        <span class="stat-label">attended:</span>
+                        <span class="attended">0</span>
+                        <button class="minus-btn" onclick="decrementAttended(this)">−</button>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">total:</span>
+                        <span class="total">0</span>
+                        <button class="minus-btn" onclick="decrementTotal(this)">−</button>
+                    </div>
+                    <div class="subject-progress progress-circle">
+                        <canvas class="subject-chart"></canvas>
+                        <span class="progress-value">0%</span>
+                    </div>
+                </div>
+                <div class="attendance-controls">
+                    <button class="attendance-btn present" onclick="markAttendance(this, 'present')">present</button>
+                    <button class="attendance-btn absent" onclick="markAttendance(this, 'absent')">absent</button>
+                </div>
             </div>
         </div>
 
-        <div class="subject" id="arbitration">
-            <h2>Arbitration</h2>
-            <div class="stats">
-                <span>Attended: <span class="attended">0</span></span>
-                <button class="minus attended-minus">-</button>
-                <span>Total Lectures: <span class="total">0</span></span>
-                <button class="minus total-minus">-</button>
-                <span>Percentage: <span class="percentage">0%</span></span>
-            </div>
-            <div class="buttons">
-                <button class="present">Present</button>
-                <button class="absent">Absent</button>
-                <button class="no-lecture">No Lecture</button>
-            </div>
-        </div>
+        <div class="medical-section">
+            <button class="medical-toggle-btn">Show Medical Dates</button>
+            <div class="medical-dates-container" style="display: none;">
+                <div class="medical-dates">
+                    <ul id="medicalDatesList"></ul>
+                </div>
+    </div>
+    
+        <div class="username">@umarxshaikh</div>
+    </div>
 
-        <div class="subject" id="jurisprudence">
-            <h2>Jurisprudence</h2>
-            <div class="stats">
-                <span>Attended: <span class="attended">0</span></span>
-                <button class="minus attended-minus">-</button>
-                <span>Total Lectures: <span class="total">0</span></span>
-                <button class="minus total-minus">-</button>
-                <span>Percentage: <span class="percentage">0%</span></span>
-            </div>
-            <div class="buttons">
-                <button class="present">Present</button>
-                <button class="absent">Absent</button>
-                <button class="no-lecture">No Lecture</button>
-            </div>
-        </div>
+    <script>
+        let overallChart;
+        const subjectCharts = {};
 
-        <div class="subject" id="competition">
-            <h2>Competition</h2>
-            <div class="stats">
-                <span>Attended: <span class="attended">0</span></span>
-                <button class="minus attended-minus">-</button>
-                <span>Total Lectures: <span class="total">0</span></span>
-                <button class="minus total-minus">-</button>
-                <span>Percentage: <span class="percentage">0%</span></span>
-            </div>
-            <div class="buttons">
-                <button class="present">Present</button>
-                <button class="absent">Absent</button>
-                <button class="no-lecture">No Lecture</button>
-            </div>
-        </div>
-    </main>
+        window.onload = function() {
+            initializeCharts();
+            loadData();
+        };
 
-    <script src="script.js"></script>
+        function initializeCharts() {
+            const chartOptions = {
+                type: 'doughnut',
+                data: {
+                    datasets: [{
+                        data: [0, 100],
+                        backgroundColor: ['#22c55e', '#27272a'],
+                        borderWidth: 0
+                    }]
+                },
+                options: {
+                    cutout: '80%',
+                    responsive: true,
+                    maintainAspectRatio: true,
+                    plugins: {
+                        legend: {
+                            display: false
+                        },
+                        tooltip: {
+                            enabled: false
+                        }
+                    }
+                }
+            };
+
+            const overallCtx = document.getElementById('overallChart').getContext('2d');
+            overallChart = new Chart(overallCtx, chartOptions);
+
+            document.querySelectorAll('.subject-chart').forEach(canvas => {
+                const ctx = canvas.getContext('2d');
+                const subject = canvas.closest('.subject-card').dataset.subject;
+                subjectCharts[subject] = new Chart(ctx, chartOptions);
+            });
+        }
+
+        function markAttendance(btn, status) {
+            const card = btn.closest('.subject-card');
+            const attended = card.querySelector('.attended');
+            const total = card.querySelector('.total');
+
+            if (status === 'present') {
+                attended.textContent = parseInt(attended.textContent) + 1;
+            }
+            total.textContent = parseInt(total.textContent) + 1;
+
+            updatePercentages(card);
+        }
+
+        function decrementAttended(btn) {
+            const card = btn.closest('.subject-card');
+            const attended = card.querySelector('.attended');
+            const currentValue = parseInt(attended.textContent);
+            if (currentValue > 0) {
+                attended.textContent = currentValue - 1;
+                updatePercentages(card);
+            }
+        }
+
+        function decrementTotal(btn) {
+            const card = btn.closest('.subject-card');
+            const total = card.querySelector('.total');
+            const attended = card.querySelector('.attended');
+            const currentTotal = parseInt(total.textContent);
+            const currentAttended = parseInt(attended.textContent);
+            if (currentTotal > 0) {
+                total.textContent = currentTotal - 1;
+                if (currentAttended > currentTotal - 1) {
+                    attended.textContent = currentTotal - 1;
+                }
+                updatePercentages(card);
+            }
+        }
+
+        function updatePercentages(card) {
+            const attended = parseInt(card.querySelector('.attended').textContent);
+            const total = parseInt(card.querySelector('.total').textContent);
+            const percentage = total > 0 ? (attended / total * 100).toFixed(0) : 0;
+            
+            card.querySelector('.progress-value').textContent = `${percentage}%`;
+            
+            const subject = card.dataset.subject;
+            updateSubjectChart(subject, percentage);
+            updateOverallAttendance();
+            saveData();
+        }
+
+        function updateSubjectChart(subject, percentage) {
+            const chart = subjectCharts[subject];
+            chart.data.datasets[0].data = [percentage, 100 - percentage];
+            chart.update();
+        }
+
+        function updateOverallAttendance() {
+            let totalAttended = 0;
+            let totalLectures = 0;
+
+            document.querySelectorAll('.subject-card').forEach(card => {
+                totalAttended += parseInt(card.querySelector('.attended').textContent);
+                totalLectures += parseInt(card.querySelector('.total').textContent);
+            });
+
+            const overallPercentage = totalLectures > 0 ? (totalAttended / totalLectures * 100).toFixed(0) : 0;<!-- Previous HTML and first part of JavaScript remains exactly the same, then continue with: -->
+
+overallChart.data.datasets[0].data = [overallPercentage, 100 - overallPercentage];
+overallChart.data.datasets[0].backgroundColor = [
+    overallPercentage >= 75 ? '#22c55e' : 
+    overallPercentage >= 55 ? '#eab308' : '#ef4444',
+    '#27272a'
+];
+overallChart.update();
+
+document.querySelector('.overall-progress .progress-value').textContent = `${overallPercentage}%`;
+}
+
+function markAllPresent() {
+document.querySelectorAll('.subject-card').forEach(card => {
+    const attended = card.querySelector('.attended');
+    const total = card.querySelector('.total');
+    attended.textContent = parseInt(attended.textContent) + 1;
+    total.textContent = parseInt(total.textContent) + 1;
+    updatePercentages(card);
+});
+}
+
+function markAllAbsent() {
+document.querySelectorAll('.subject-card').forEach(card => {
+    const total = card.querySelector('.total');
+    total.textContent = parseInt(total.textContent) + 1;
+    updatePercentages(card);
+});
+}
+
+function markMedical() {
+        const date = new Date().toLocaleDateString();
+        const list = document.getElementById('medicalDatesList');
+        const li = document.createElement('li');
+        
+        const dateSpan = document.createElement('span');
+        dateSpan.textContent = date;
+        
+        const deleteBtn = document.createElement('button');
+        deleteBtn.textContent = '×';
+        deleteBtn.className = 'delete-date';
+        deleteBtn.onclick = function() {
+            li.remove();
+            saveMedicalDates();
+        };
+        
+        li.appendChild(dateSpan);
+        li.appendChild(deleteBtn);
+        list.appendChild(li);
+        saveMedicalDates();
+    }
+    
+function editSubjectName(element) {
+const currentName = element.textContent;
+const newName = prompt('Enter new subject name:', currentName);
+if (newName && newName.trim() !== '') {
+    element.textContent = newName.trim();
+    saveData();
+}
+}
+
+function saveData() {
+const data = {};
+document.querySelectorAll('.subject-card').forEach(card => {
+    const subject = card.dataset.subject;
+    data[subject] = {
+        name: card.querySelector('.subject-title').textContent,
+        attended: card.querySelector('.attended').textContent,
+        total: card.querySelector('.total').textContent
+    };
+});
+localStorage.setItem('attendanceData', JSON.stringify(data));
+}
+
+function saveMedicalDates() {
+const dates = Array.from(document.querySelectorAll('#medicalDatesList li'))
+    .map(li => li.textContent);
+localStorage.setItem('medicalDates', JSON.stringify(dates));
+}
+
+function loadData() {
+        const savedData = localStorage.getItem('attendanceData');
+        if (savedData) {
+            const data = JSON.parse(savedData);
+            Object.entries(data).forEach(([subject, values]) => {
+                const card = document.querySelector(`[data-subject="${subject}"]`);
+                if (card) {
+                    card.querySelector('.subject-title').textContent = values.name;
+                    card.querySelector('.attended').textContent = values.attended;
+                    card.querySelector('.total').textContent = values.total;
+                    updatePercentages(card);
+                }
+            });
+        }
+
+        const savedDates = localStorage.getItem('medicalDates');
+        if (savedDates) {
+            const dates = JSON.parse(savedDates);
+            const list = document.getElementById('medicalDatesList');
+            dates.forEach(date => {
+                const li = document.createElement('li');
+                
+                const dateSpan = document.createElement('span');
+                dateSpan.textContent = date;
+                
+                const deleteBtn = document.createElement('button');
+                deleteBtn.textContent = '×';
+                deleteBtn.className = 'delete-date';
+                deleteBtn.onclick = function() {
+                    li.remove();
+                    saveMedicalDates();
+                };
+                
+                li.appendChild(dateSpan);
+                li.appendChild(deleteBtn);
+                list.appendChild(li);
+            });
+        }
+    }
+
+    function saveMedicalDates() {
+        const dates = Array.from(document.querySelectorAll('#medicalDatesList li span'))
+            .map(span => span.textContent);
+        localStorage.setItem('medicalDates', JSON.stringify(dates));
+    }
+
+    document.querySelector('.medical-toggle-btn').addEventListener('click', function() {
+        const container = document.querySelector('.medical-dates-container');
+        const isHidden = container.style.display === 'none';
+        container.style.display = isHidden ? 'block' : 'none';
+     this.textContent = isHidden ? 'Hide Medical Dates' : 'Show Medical Dates';
+    }
+);
+    
+</script>
 </body>
 </html>
