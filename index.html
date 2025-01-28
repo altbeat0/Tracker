@@ -576,13 +576,46 @@ function markMedical() {
     }
     
 function editSubjectName(element) {
-const currentName = element.textContent;
-const newName = prompt('Enter new subject name:', currentName);
-if (newName && newName.trim() !== '') {
-    element.textContent = newName.trim();
-    saveData();
+    const currentName = element.textContent;
+    
+    // Create input element
+    const input = document.createElement('input');
+    input.type = 'text';
+    input.value = currentName;
+    input.className = 'subject-edit-input';
+    
+    // Add mobile-friendly attributes
+    input.setAttribute('inputmode', 'text');
+    input.setAttribute('autocomplete', 'off');
+    input.setAttribute('autocorrect', 'off');
+    
+    // Replace element content with input
+    element.textContent = '';
+    element.appendChild(input);
+    
+    // Focus and select text
+    input.focus();
+    input.select();
+    
+    // Handle completion
+    const saveEdit = () => {
+        const newName = input.value.trim();
+        if (newName !== '') {
+            element.textContent = newName;
+            saveData();
+        } else {
+            element.textContent = currentName;
+        }
+    };
+    
+    input.addEventListener('blur', saveEdit);
+    input.addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') {
+            input.blur();
+        }
+    });
 }
-}
+
 
 function saveData() {
 const data = {};
