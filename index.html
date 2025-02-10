@@ -1,729 +1,884 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <meta name="apple-mobile-web-app-title" content="Attendance">
-    <link rel="apple-touch-icon" href="https://ih1.redbubble.net/image.4984021528.7713/st,small,507x507-pad,600x600,f8f8f8.u1.jpg">
-    <title>Tracker</title>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.7.0/chart.min.js"></script>
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-            font-family: system-ui, -apple-system, sans-serif;
+  <meta charset="UTF-8">
+  <!-- The following meta tag helps disable user scaling (and together with the CSS below, minimizes the iOS page shifting issue) -->
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Attendance">
+  <link rel="apple-touch-icon" href="https://ih1.redbubble.net/image.4984021528.7713/st,small,507x507-pad,600x600,f8f8f8.u1.jpg">
+  <title>Tracker</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.7.0/chart.min.js"></script>
+  <style>
+    /* Disable overscroll and tap-zoom on iOS */
+    html, body {
+      overscroll-behavior: none;
+      -webkit-overflow-scrolling: auto;
+    }
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: system-ui, -apple-system, sans-serif;
+    }
+    /* Remove tap highlight for buttons and inputs */
+    button, input, .btn, .attendance-btn {
+      -webkit-tap-highlight-color: transparent;
+    }
+    body {
+      background-color: #1a1a1a;
+      color: #ffffff;
+      padding: 20px;
+    }
+    .container {
+      max-width: 600px;
+      margin: 0 auto;
+    }
+    .attendance-header {
+      display: flex;
+      justify-content: center;
+      margin-bottom: 20px;
+      gap: 20px;
+    }
+    .attendance-header h2 {
+      font-size: 40px;
+      font-weight: 400;
+      margin-top: 15px;
+    }
+    .overall-progress {
+      width: 80px;
+      height: 80px;
+      position: relative;
+    }
+    .attendance-tally {
+      display: flex;
+      justify-content: center;
+      gap: 20px;
+      margin-bottom: 20px;
+      font-size: 18px;
+      color: #ffffff;
+    }
+    .action-buttons {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 30px;
+      justify-content: center;
+    }
+    .btn {
+      padding: 8px 16px;
+      border: none;
+      border-radius: 20px;
+      color: white;
+      cursor: pointer;
+      font-size: 14px;
+      transition: opacity 0.2s;
+    }
+    .btn:hover {
+      opacity: 0.9;
+    }
+    .btn-present {
+      background-color: #22c55e;
+    }
+    .btn-absent {
+      background-color: #ef4444;
+    }
+    .btn-medical {
+      background-color: #d6a30a;
+    }
+    .subject-card {
+      background-color: #27272a;
+      border-radius: 12px;
+      padding: 20px;
+      margin-bottom: 15px;
+    }
+    .subject-title {
+      font-size: 20px;
+      font-weight: 400;
+      margin-bottom: 15px;
+      cursor: pointer;
+    }
+    .subject-stats {
+      display: flex;
+      align-items: center;
+      gap: 15px;
+      margin-bottom: 15px;
+    }
+    .stat-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .stat-label {
+      color: #a1a1aa;
+    }
+    .minus-btn {
+      background-color: #ef4444;
+      border: none;
+      cursor: pointer;
+      width: 30px;
+      height: 30px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-size: 20px;
+      padding-bottom: 3px;
+      user-select: none;
+    }
+    .attendance-controls {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+    }
+    .attendance-btn {
+      padding: 8px 16px;
+      border: none;
+      border-radius: 20px;
+      color: white;
+      cursor: pointer;
+      font-size: 14px;
+      transition: opacity 0.2s;
+    }
+    .attendance-btn.present {
+      background-color: #22c55e;
+    }
+    .attendance-btn.absent {
+      background-color: #ef4444;
+    }
+    .subject-progress {
+      width: 75px;
+      height: 40px;
+      margin-left: auto;
+      margin-top: -30px;
+      position: relative;
+    }
+    .username {
+      color: #a1a1aa;
+      font-size: 14px;
+      margin-top: 20px;
+      text-align: right;
+    }
+    .medical-dates {
+      margin-top: 0px;
+      color: #a1a1aa;
+      font-size: 14px;
+    }
+    .medical-dates ul {
+      list-style: none;
+      margin-top: 0px;
+    }
+    .medical-dates li {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 4px 0;             /* minimal vertical padding */
+        border-bottom: 1px solid #444444bc;  /* grey divider line */
         }
 
-        body {
-            background-color: #1a1a1a;
-            color: #ffffff;
-            padding: 20px;
+        .medical-dates li:last-child {
+        border-bottom: none;        /* no divider after the last item */
         }
 
-        .container {
-            max-width: 600px;
-            margin: 0 auto;
+    /* Increase font size for dates and cross button */
+    .medical-dates li span {
+      font-size: 16px;
+    }
+    .delete-date {
+      background: none;
+      border: none;
+      color: #ef4444;
+      cursor: pointer;
+      padding: 2px 8px;
+      font-size: 18px;
+    }
+    .delete-date:hover {
+      opacity: 0.8;
+    }
+    .progress-circle {
+      position: relative;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .progress-value {
+      position: absolute;
+      font-size: 16px;
+      font-weight: 500;
+    }
+    /* Medical section styles */
+        .medical-toggle-btn {
+        background-color: #d6a30a;
+        color: white;
+        padding: 8px 16px;
+        border: none;
+        border-radius: 20px;
+        cursor: pointer;
+        display: block;
+        text-transform: lowercase;
+        float: right;      /* Aligns this button to the right */
+        margin: 0 0 10px 0;
+    }
+
+    /* New blue reset button (placed next to the toggle button) */
+        .reset-btn {
+        background-color: #007bffc5;
+        color: white;
+        padding: 8px 16px;
+        border: none;
+        border-radius: 20px;
+        cursor: pointer;
+        font-size: 14px;
+        text-transform: lowercase;
+        display: block;
+        float: left;       /* Aligns this button to the left */
+        margin: 0 0 10px 0;
+    }
+
+    .reset-btn:hover {
+      opacity: 0.9;
+    }
+    .medical-dates-container {
+      transition: all 0.3s ease;
+      margin-top: 10px;
+      background-color: #1e1e1e;
+      padding: 10px;
+      border-radius: 8px;
+    }
+    /* Center the "after submitting" message with padding */
+    #medicalAttendanceMessage {
+      margin-top: 0px;
+      font-size: 16px;
+      font-weight: 500;
+      text-align: center;
+      padding: 0 30px 20px 30px;
+      color:#b0b0bc
+    }
+    /* Date picker and button: right aligned and lower case */
+    .medical-input {
+        padding: 5px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        margin-bottom: 10px;
+        justify-content: flex-end;  /* This ensures all children align to the right */
         }
 
-        .attendance-header {
-            display: flex;
-            justify-content: center; /* Center-align header */
-            margin-bottom: 20px;
-            gap: 20px;
+    .medical-input input[type="date"] {
+        padding: 4px;
+        border-radius: 4px;
+        border: 1px solid #ccc;
+        text-transform: lowercase;
+        margin-bottom: 10px;  /* Removed auto margins */
+        background-color: #fff;
+        color: #000;
+        -webkit-appearance: none;
+        appearance: none;
         }
 
-        .attendance-header h2 {
-            font-size: 40px;
-            font-weight: 400;
-            margin-top: 15px;
+    .medical-input button {
+        padding: 6px 12px;
+        border: none;
+        border-radius: 4px;
+        background-color: #d6a30a;
+        color: white;
+        cursor: pointer;
+        text-transform: lowercase;
+        margin-bottom: 10px;  /* Removed auto margins */
         }
 
-        .overall-progress {
-            width: 80px;
-            height: 80px;
-            position: relative;
+    .marking-status {
+      color: #22c55e;
+      font-size: 14px;
+      opacity: 0;
+      transition: opacity 0.3s;
+      margin-left: 10px;
+    }
+    .marking-status.visible {
+      opacity: 1;
+    }
+    .marking-status .tick {
+      margin-right: 4px;
+    }
+
+    .footer {
+        text-align: center;
+        margin: 20px;
+        padding-top: 10px;
+        border-top: 1px solid #444;
+        font-size: 14px;
         }
-
-        .action-buttons {
-            display: flex;
-            gap: 10px;
-            margin-bottom: 30px;
-            justify-content: center;
+        .footer .note {
+        margin-bottom: 5px;
+        color: #c5c5c5ac;
+        line-height: 1.5;
         }
-
-        .btn {
-            padding: 8px 16px;
-            border: none;
-            border-radius: 20px;
-            color: white;
-            cursor: pointer;
-            font-size: 14px;
-            transition: opacity 0.2s;
-        }
-
-        .btn:hover {
-            opacity: 0.9;
-        }
-
-        .btn-present {
-            background-color: #22c55e;
-        }
-
-        .btn-absent {
-            background-color: #ef4444;
-        }
-
-        .btn-medical {
-            background-color: #d6a30a;
-        }
-
-        .subject-card {
-            background-color: #27272a;
-            border-radius: 12px;
-            padding: 20px;
-            margin-bottom: 15px;
-        }
-
-        .subject-title {
-            font-size: 20px;
-            font-weight: 400;
-            margin-bottom: 15px;
-            cursor: pointer;
-        }
-
-        .subject-stats {
-            display: flex;
-            align-items: center;
-            gap: 15px;
-            margin-bottom: 15px;
-        }
-
-        .stat-item {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-
-        .stat-label {
-            color: #a1a1aa;
-        }
-
-        .minus-btn {
-            background-color: #ef4444;
-            border: none;
-            cursor: pointer;
-            width: 30px;
-            height: 30px;
-            border-radius: 50%;
-            position: relative;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: white;
-            font-size: 20px;
-            padding-bottom: 3px;
-            user-select: none;
-        }
-
-        .attendance-controls {
-            display: flex;
-            gap: 10px;
-            align-items: center;
-        }
-
-        .attendance-btn {
-            padding: 8px 16px;
-            border: none;
-            border-radius: 20px;
-            color: white;
-            cursor: pointer;
-            font-size: 14px;
-            transition: opacity 0.2s;
-        }
-
-        .attendance-btn.present {
-            background-color: #22c55e;
-        }
-
-        .attendance-btn.absent {
-            background-color: #ef4444;
-        }
-
-        .subject-progress {
-            width: 75px;
-            height: 40px;
-            margin-left: auto;
-            margin-top: -30px;
-            position: relative;
-        }
-
-        .username {
-            color: #a1a1aa;
-            font-size: 14px;
-            margin-top: 20px;
-            text-align: right;
-        }
-
-        .medical-dates {
-            margin-top: 0px;
-            color: #a1a1aa;
-            font-size: 14px;
-        }
-
-        .medical-dates ul {
-            list-style: none;
-            margin-top: 0px;
-        }
-
-        .medical-dates li {
-            margin-bottom: 5px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-
-        .delete-date {
-            background: none;
-            border: none;
-            color: #ef4444;
-            cursor: pointer;
-            padding: 2px 8px;
-            font-size: 14px;
-        }
-
-        .delete-date:hover {
-            opacity: 0.8;
-        }
-
-        .progress-circle {
-            position: relative;
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            
-        }
-
-        .progress-value {
-            position: absolute;
-            font-size: 16px;
-            font-weight: 500;
-        }
-
-            .medical-toggle-btn {
-                background-color: #d6a30a;
-                color: white;
-                padding: 8px 16px;
-                border: none;
-                border-radius: 20px;
-                cursor: pointer;
-                margin-bottom: 10px;
-                
-            }
-
-        .medical-dates-container {
-            transition: all 0.3s ease;
-        }
-
-        .marking-status {
-            color: #22c55e;
-            font-size: 14px;
-            opacity: 0;
-            transition: opacity 0.3s;
-            margin-left: 10px;
-        }
-
-        .marking-status.visible {
-            opacity: 1;
-        }
-
-        .marking-status .tick {
-            margin-right: 4px;
+        .footer .developer {
+        color: #7a7a8097;
         }
 
 
-          /* Add to existing styles */
-          @media (display-mode: standalone) {
-            body {
-                padding-top: 40px; /* Add padding for iOS status bar */
-            }
-        }
-    </style>
+    @media (display-mode: standalone) {
+      body {
+        padding-top: 40px;
+      }
+    }
+  </style>
 </head>
 <body>
-    <div class="container">
-        <div class="attendance-header">
-            <h2>attendance:</h2>
-            <div class="overall-progress progress-circle">
-                <canvas id="overallChart"></canvas>
-                <span class="progress-value">0%</span>
-            </div>
-        </div>
-
-        <div class="action-buttons">
-            <button class="btn btn-present" onclick="markAllPresent()">all present</button>
-            <button class="btn btn-absent" onclick="markAllAbsent()">all absent</button>
-            <button class="btn btn-medical" onclick="markMedical()">mark for medical</button>
-        </div>
-
-        <div class="subjects">
-            <div class="subject-card" data-subject="evidence">
-                <h3 class="subject-title" onclick="editSubjectName(this)">evidence</h3>
-                <div class="subject-stats">
-                    <div class="stat-item">
-                        <span class="stat-label">attended:</span>
-                        <span class="attended">0</span>
-                        <button class="minus-btn" onclick="decrementAttended(this)">−</button>
-                    </div>
-                    <div class="stat-item">
-                        <span class="stat-label">total:</span>
-                        <span class="total">0</span>
-                        <button class="minus-btn" onclick="decrementTotal(this)">−</button>
-                    </div>
-                    <div class="subject-progress progress-circle">
-                        <canvas class="subject-chart"></canvas>
-                        <span class="progress-value">0%</span>
-                    </div>
-                </div>
-                <div class="attendance-controls">
-                    <button class="attendance-btn present" onclick="markAttendance(this, 'present')">present</button>
-                    <button class="attendance-btn absent" onclick="markAttendance(this, 'absent')">absent</button>
-                    <span class="marking-status"><span class="tick">✓</span>marked</span>
-                </div>
-               
-            </div>
-
-            <div class="subject-card" data-subject="labour">
-                <h3 class="subject-title" onclick="editSubjectName(this)">labour</h3>
-                <div class="subject-stats">
-                    <div class="stat-item">
-                        <span class="stat-label">attended:</span>
-                        <span class="attended">0</span>
-                        <button class="minus-btn" onclick="decrementAttended(this)">−</button>
-                    </div>
-                    <div class="stat-item">
-                        <span class="stat-label">total:</span>
-                        <span class="total">0</span>
-                        <button class="minus-btn" onclick="decrementTotal(this)">−</button>
-                    </div>
-                    <div class="subject-progress progress-circle">
-                        <canvas class="subject-chart"></canvas>
-                        <span class="progress-value">0%</span>
-                    </div>
-                </div>
-                <div class="attendance-controls">
-                    <button class="attendance-btn present" onclick="markAttendance(this, 'present')">present</button>
-                    <button class="attendance-btn absent" onclick="markAttendance(this, 'absent')">absent</button>
-                    <span class="marking-status"><span class="tick">✓</span>marked</span>
-                </div>
-    
-            </div>
-            
-
-            <div class="subject-card" data-subject="adr">
-                <h3 class="subject-title" onclick="editSubjectName(this)">adr</h3>
-                <div class="subject-stats">
-                    <div class="stat-item">
-                        <span class="stat-label">attended:</span>
-                        <span class="attended">0</span>
-                        <button class="minus-btn" onclick="decrementAttended(this)">−</button>
-                    </div>
-                    <div class="stat-item">
-                        <span class="stat-label">total:</span>
-                        <span class="total">0</span>
-                        <button class="minus-btn" onclick="decrementTotal(this)">−</button>
-                    </div>
-                    <div class="subject-progress progress-circle">
-                        <canvas class="subject-chart"></canvas>
-                        <span class="progress-value">0%</span>
-                    </div>
-                </div>
-                <div class="attendance-controls">
-                    <button class="attendance-btn present" onclick="markAttendance(this, 'present')">present</button>
-                    <button class="attendance-btn absent" onclick="markAttendance(this, 'absent')">absent</button>
-                    <span class="marking-status"><span class="tick">✓</span>marked</span>
-                </div>
-                
-            </div>
-
-            <div class="subject-card" data-subject="jurisprudence">
-                <h3 class="subject-title" onclick="editSubjectName(this)">jurisprudence</h3>
-                <div class="subject-stats">
-                    <div class="stat-item">
-                        <span class="stat-label">attended:</span>
-                        <span class="attended">0</span>
-                        <button class="minus-btn" onclick="decrementAttended(this)">−</button>
-                    </div>
-                    <div class="stat-item">
-                        <span class="stat-label">total:</span>
-                        <span class="total">0</span>
-                        <button class="minus-btn" onclick="decrementTotal(this)">−</button>
-                    </div>
-                    <div class="subject-progress progress-circle">
-                        <canvas class="subject-chart"></canvas>
-                        <span class="progress-value">0%</span>
-                    </div>
-                </div>
-                <div class="attendance-controls">
-                    <button class="attendance-btn present" onclick="markAttendance(this, 'present')">present</button>
-                    <button class="attendance-btn absent" onclick="markAttendance(this, 'absent')">absent</button>
-                    <span class="marking-status"><span class="tick">✓</span>marked</span>
-                </div>
-
-            </div>
-
-            <div class="subject-card" data-subject="optional">
-                <h3 class="subject-title" onclick="editSubjectName(this)">optional</h3>
-                <div class="subject-stats">
-                    <div class="stat-item">
-                        <span class="stat-label">attended:</span>
-                        <span class="attended">0</span>
-                        <button class="minus-btn" onclick="decrementAttended(this)">−</button>
-                    </div>
-                    <div class="stat-item">
-                        <span class="stat-label">total:</span>
-                        <span class="total">0</span>
-                        <button class="minus-btn" onclick="decrementTotal(this)">−</button>
-                    </div>
-                    <div class="subject-progress progress-circle">
-                        <canvas class="subject-chart"></canvas>
-                        <span class="progress-value">0%</span>
-                    </div>
-                </div>
-                <div class="attendance-controls">
-                    <button class="attendance-btn present" onclick="markAttendance(this, 'present')">present</button>
-                    <button class="attendance-btn absent" onclick="markAttendance(this, 'absent')">absent</button>
-                    <span class="marking-status"><span class="tick">✓</span>marked</span>
-
-                </div>
-            </div>
-        </div>
-
-        <div class="medical-section">
-            <button class="medical-toggle-btn">Show Medical Dates</button>
-            <div class="medical-dates-container" style="display: none;">
-                <div class="medical-dates">
-                    <ul id="medicalDatesList"></ul>
-                </div>
+  <div class="container">
+    <div class="attendance-header">
+      <h2>attendance:</h2>
+      <div class="overall-progress progress-circle">
+        <canvas id="overallChart"></canvas>
+        <span class="progress-value">0%</span>
+      </div>
     </div>
-    
-        <div class="username">@umarxshaikh</div>
+    <!-- Tally display -->
+    <div class="attendance-tally">
+      <span id="totalAttended">total attended: 0</span>
+      <span id="totalLectures">total lectures: 0</span>
     </div>
-
-    <script>
-        let overallChart;
-        const subjectCharts = {};
-
-        window.onload = function() {
-            initializeCharts();
-            loadData();
-        };
-
-        function initializeCharts() {
-            const chartOptions = {
-                type: 'doughnut',
-                data: {
-                    datasets: [{
-                        data: [0, 100],
-                        backgroundColor: ['#22c55e', '#27272a'],
-                        borderWidth: 0
-                    }]
-                },
-                options: {
-                    cutout: '80%',
-                    responsive: true,
-                    maintainAspectRatio: true,
-                    plugins: {
-                        legend: {
-                            display: false
-                        },
-                        tooltip: {
-                            enabled: false
-                        }
-                    }
-                }
-            };
-
-            const overallCtx = document.getElementById('overallChart').getContext('2d');
-            overallChart = new Chart(overallCtx, chartOptions);
-
-            document.querySelectorAll('.subject-chart').forEach(canvas => {
-                const ctx = canvas.getContext('2d');
-                const subject = canvas.closest('.subject-card').dataset.subject;
-                subjectCharts[subject] = new Chart(ctx, chartOptions);
-            });
-        }
-
-        function markAttendance(btn, status) {
-            const card = btn.closest('.subject-card');
-            const attended = card.querySelector('.attended');
-            const total = card.querySelector('.total');
-
-            if (status === 'present') {
-                attended.textContent = parseInt(attended.textContent) + 1;
-            }
-            total.textContent = parseInt(total.textContent) + 1;
-
-            updatePercentages(card);
-        }
-
-        function decrementAttended(btn) {
-            const card = btn.closest('.subject-card');
-            const attended = card.querySelector('.attended');
-            const currentValue = parseInt(attended.textContent);
-            if (currentValue > 0) {
-                attended.textContent = currentValue - 1;
-                updatePercentages(card);
-            }
-        }
-
-        function decrementTotal(btn) {
-            const card = btn.closest('.subject-card');
-            const total = card.querySelector('.total');
-            const attended = card.querySelector('.attended');
-            const currentTotal = parseInt(total.textContent);
-            const currentAttended = parseInt(attended.textContent);
-            if (currentTotal > 0) {
-                total.textContent = currentTotal - 1;
-                if (currentAttended > currentTotal - 1) {
-                    attended.textContent = currentTotal - 1;
-                }
-                updatePercentages(card);
-            }
-        }
-
-        function updatePercentages(card) {
-            const attended = parseInt(card.querySelector('.attended').textContent);
-            const total = parseInt(card.querySelector('.total').textContent);
-            const percentage = total > 0 ? (attended / total * 100).toFixed(0) : 0;
-            
-            card.querySelector('.progress-value').textContent = `${percentage}%`;
-            
-            const subject = card.dataset.subject;
-            updateSubjectChart(subject, percentage);
-            updateOverallAttendance();
-            saveData();
-        }
-
-        function updateSubjectChart(subject, percentage) {
-            const chart = subjectCharts[subject];
-            chart.data.datasets[0].data = [percentage, 100 - percentage];
-            chart.update();
-        }
-
-        function updateOverallAttendance() {
-            let totalAttended = 0;
-            let totalLectures = 0;
-
-            document.querySelectorAll('.subject-card').forEach(card => {
-                totalAttended += parseInt(card.querySelector('.attended').textContent);
-                totalLectures += parseInt(card.querySelector('.total').textContent);
-            });
-
-            const overallPercentage = totalLectures > 0 ? (totalAttended / totalLectures * 100).toFixed(0) : 0;<!-- Previous HTML and first part of JavaScript remains exactly the same, then continue with: -->
-
-overallChart.data.datasets[0].data = [overallPercentage, 100 - overallPercentage];
-overallChart.data.datasets[0].backgroundColor = [
-    overallPercentage >= 75 ? '#22c55e' : 
-    overallPercentage >= 55 ? '#eab308' : '#ef4444',
-    '#27272a'
-];
-overallChart.update();
-
-document.querySelector('.overall-progress .progress-value').textContent = `${overallPercentage}%`;
-}
-
-function markAllPresent() {
-document.querySelectorAll('.subject-card').forEach(card => {
-    const attended = card.querySelector('.attended');
-    const total = card.querySelector('.total');
-    attended.textContent = parseInt(attended.textContent) + 1;
-    total.textContent = parseInt(total.textContent) + 1;
-    updatePercentages(card);
-});
-}
-
-function markAllAbsent() {
-document.querySelectorAll('.subject-card').forEach(card => {
-    const total = card.querySelector('.total');
-    total.textContent = parseInt(total.textContent) + 1;
-    updatePercentages(card);
-});
-}
-
-function markMedical() {
-        const date = new Date().toLocaleDateString();
-        const list = document.getElementById('medicalDatesList');
-        const li = document.createElement('li');
+    <div class="action-buttons">
+      <button class="btn btn-present" onclick="markAllPresent()">all present</button>
+      <button class="btn btn-absent" onclick="markAllAbsent()">all absent</button>
+      <button class="btn btn-medical" onclick="markMedical()">mark for medical</button>
+    </div>
+    <!-- Subjects section -->
+    <div class="subjects">
+      <div class="subject-card" data-subject="evidence">
+        <h3 class="subject-title" onclick="editSubjectName(this)">evidence</h3>
+        <div class="subject-stats">
+          <div class="stat-item">
+            <span class="stat-label">attended:</span>
+            <span class="attended">0</span>
+            <button class="minus-btn" onclick="decrementAttended(this)">−</button>
+          </div>
+          <div class="stat-item">
+            <span class="stat-label">total:</span>
+            <span class="total">0</span>
+            <button class="minus-btn" onclick="decrementTotal(this)">−</button>
+          </div>
+          <div class="subject-progress progress-circle">
+            <canvas class="subject-chart"></canvas>
+            <span class="progress-value">0%</span>
+          </div>
+        </div>
+        <div class="attendance-controls">
+          <button class="attendance-btn present" onclick="markAttendance(this, 'present')">present</button>
+          <button class="attendance-btn absent" onclick="markAttendance(this, 'absent')">absent</button>
+          <span class="marking-status"><span class="tick">✓</span>marked</span>
+        </div>
+      </div>
+      <div class="subject-card" data-subject="labour">
+        <h3 class="subject-title" onclick="editSubjectName(this)">labour</h3>
+        <div class="subject-stats">
+          <div class="stat-item">
+            <span class="stat-label">attended:</span>
+            <span class="attended">0</span>
+            <button class="minus-btn" onclick="decrementAttended(this)">−</button>
+          </div>
+          <div class="stat-item">
+            <span class="stat-label">total:</span>
+            <span class="total">0</span>
+            <button class="minus-btn" onclick="decrementTotal(this)">−</button>
+          </div>
+          <div class="subject-progress progress-circle">
+            <canvas class="subject-chart"></canvas>
+            <span class="progress-value">0%</span>
+          </div>
+        </div>
+        <div class="attendance-controls">
+          <button class="attendance-btn present" onclick="markAttendance(this, 'present')">present</button>
+          <button class="attendance-btn absent" onclick="markAttendance(this, 'absent')">absent</button>
+          <span class="marking-status"><span class="tick">✓</span>marked</span>
+        </div>
+      </div>
+      <div class="subject-card" data-subject="adr">
+        <h3 class="subject-title" onclick="editSubjectName(this)">adr</h3>
+        <div class="subject-stats">
+          <div class="stat-item">
+            <span class="stat-label">attended:</span>
+            <span class="attended">0</span>
+            <button class="minus-btn" onclick="decrementAttended(this)">−</button>
+          </div>
+          <div class="stat-item">
+            <span class="stat-label">total:</span>
+            <span class="total">0</span>
+            <button class="minus-btn" onclick="decrementTotal(this)">−</button>
+          </div>
+          <div class="subject-progress progress-circle">
+            <canvas class="subject-chart"></canvas>
+            <span class="progress-value">0%</span>
+          </div>
+        </div>
+        <div class="attendance-controls">
+          <button class="attendance-btn present" onclick="markAttendance(this, 'present')">present</button>
+          <button class="attendance-btn absent" onclick="markAttendance(this, 'absent')">absent</button>
+          <span class="marking-status"><span class="tick">✓</span>marked</span>
+        </div>
+      </div>
+      <div class="subject-card" data-subject="jurisprudence">
+        <h3 class="subject-title" onclick="editSubjectName(this)">jurisprudence</h3>
+        <div class="subject-stats">
+          <div class="stat-item">
+            <span class="stat-label">attended:</span>
+            <span class="attended">0</span>
+            <button class="minus-btn" onclick="decrementAttended(this)">−</button>
+          </div>
+          <div class="stat-item">
+            <span class="stat-label">total:</span>
+            <span class="total">0</span>
+            <button class="minus-btn" onclick="decrementTotal(this)">−</button>
+          </div>
+          <div class="subject-progress progress-circle">
+            <canvas class="subject-chart"></canvas>
+            <span class="progress-value">0%</span>
+          </div>
+        </div>
+        <div class="attendance-controls">
+          <button class="attendance-btn present" onclick="markAttendance(this, 'present')">present</button>
+          <button class="attendance-btn absent" onclick="markAttendance(this, 'absent')">absent</button>
+          <span class="marking-status"><span class="tick">✓</span>marked</span>
+        </div>
+      </div>
+      <div class="subject-card" data-subject="optional">
+        <h3 class="subject-title" onclick="editSubjectName(this)">optional</h3>
+        <div class="subject-stats">
+          <div class="stat-item">
+            <span class="stat-label">attended:</span>
+            <span class="attended">0</span>
+            <button class="minus-btn" onclick="decrementAttended(this)">−</button>
+          </div>
+          <div class="stat-item">
+            <span class="stat-label">total:</span>
+            <span class="total">0</span>
+            <button class="minus-btn" onclick="decrementTotal(this)">−</button>
+          </div>
+          <div class="subject-progress progress-circle">
+            <canvas class="subject-chart"></canvas>
+            <span class="progress-value">0%</span>
+          </div>
+        </div>
+        <div class="attendance-controls">
+          <button class="attendance-btn present" onclick="markAttendance(this, 'present')">present</button>
+          <button class="attendance-btn absent" onclick="markAttendance(this, 'absent')">absent</button>
+          <span class="marking-status"><span class="tick">✓</span>marked</span>
+        </div>
+      </div>
+    </div>
+    <!-- Medical Section -->
+    <div class="medical-section">
+      <!-- Toggle and Reset buttons -->
+      <div style="display: flex; justify-content: center; gap: 10px; margin-bottom: 10px;">
         
-        const dateSpan = document.createElement('span');
-        dateSpan.textContent = date;
+        <button class="reset-btn" onclick="resetTodayAttendance()">↺ reset</button>
+        <button class="medical-toggle-btn">show medical dates</button>
         
-        const deleteBtn = document.createElement('button');
-        deleteBtn.textContent = '×';
-        deleteBtn.className = 'delete-date';
-        deleteBtn.onclick = function() {
-            li.remove();
-            saveMedicalDates();
-        };
-        
-        li.appendChild(dateSpan);
-        li.appendChild(deleteBtn);
-        list.appendChild(li);
-        saveMedicalDates();
-    }
-    
-function editSubjectName(element) {
-const currentName = element.textContent;
-const newName = prompt('Enter new subject name:', currentName);
-if (newName && newName.trim() !== '') {
-    element.textContent = newName.trim();
-    saveData();
-}
-}
+      </div>
+      <div class="medical-dates-container" style="display: none;">
+       
+        <!-- Date picker and button (right aligned) -->
+        <div class="medical-input">
+          <input type="date" id="medicalDateInput" />
+          <button onclick="addPastMedicalDate()">add past date</button>
+        </div>
 
-function saveData() {
-const data = {};
-document.querySelectorAll('.subject-card').forEach(card => {
-    const subject = card.dataset.subject;
-    data[subject] = {
-        name: card.querySelector('.subject-title').textContent,
-        attended: card.querySelector('.attended').textContent,
-        total: card.querySelector('.total').textContent
+         <!-- "After submitting" message -->
+         <p id="medicalAttendanceMessage">after submitting medicals, your attendance would be: 0%</p>
+
+        <div class="medical-dates">
+          <ul id="medicalDatesList"></ul>
+        </div>
+      </div>
+      
+            <!-- Add this snippet at the bottom of your container -->
+        <div class="footer">
+            <p class="note">note: subjects can be renamed by tapping on them.</p>
+            <p class="note"> install this as an app on iOS by clicking on the "Share" button and then the "Add to homescreen" button.</p>
+            <p class="developer">developed by @umarxshaikh</p>
+        </div>
+        
+    </div>
+  </div>
+
+  <script>
+    let overallChart;
+    const subjectCharts = {};
+
+    // On page load, initialize charts, load data, and set baseline attendance for today.
+    window.onload = function() {
+      initializeCharts();
+      loadData();
+      setBaselineAttendanceData();
     };
-});
-localStorage.setItem('attendanceData', JSON.stringify(data));
-}
 
-function saveMedicalDates() {
-const dates = Array.from(document.querySelectorAll('#medicalDatesList li'))
-    .map(li => li.textContent);
-localStorage.setItem('medicalDates', JSON.stringify(dates));
-}
-
-function loadData() {
-        const savedData = localStorage.getItem('attendanceData');
-        if (savedData) {
-            const data = JSON.parse(savedData);
-            Object.entries(data).forEach(([subject, values]) => {
-                const card = document.querySelector(`[data-subject="${subject}"]`);
-                if (card) {
-                    card.querySelector('.subject-title').textContent = values.name;
-                    card.querySelector('.attended').textContent = values.attended;
-                    card.querySelector('.total').textContent = values.total;
-                    updatePercentages(card);
-                }
-            });
+    function initializeCharts() {
+      const chartOptions = {
+        type: 'doughnut',
+        data: {
+          datasets: [{
+            data: [0, 100],
+            backgroundColor: ['#22c55e', '#27272a'],
+            borderWidth: 0
+          }]
+        },
+        options: {
+          cutout: '80%',
+          responsive: true,
+          maintainAspectRatio: true,
+          plugins: {
+            legend: { display: false },
+            tooltip: { enabled: false }
+          }
         }
-
-        const savedDates = localStorage.getItem('medicalDates');
-        if (savedDates) {
-            const dates = JSON.parse(savedDates);
-            const list = document.getElementById('medicalDatesList');
-            dates.forEach(date => {
-                const li = document.createElement('li');
-                
-                const dateSpan = document.createElement('span');
-                dateSpan.textContent = date;
-                
-                const deleteBtn = document.createElement('button');
-                deleteBtn.textContent = '×';
-                deleteBtn.className = 'delete-date';
-                deleteBtn.onclick = function() {
-                    li.remove();
-                    saveMedicalDates();
-                };
-                
-                li.appendChild(dateSpan);
-                li.appendChild(deleteBtn);
-                list.appendChild(li);
-            });
-        }
+      };
+      const overallCtx = document.getElementById('overallChart').getContext('2d');
+      overallChart = new Chart(overallCtx, chartOptions);
+      document.querySelectorAll('.subject-chart').forEach(canvas => {
+        const ctx = canvas.getContext('2d');
+        const subject = canvas.closest('.subject-card').dataset.subject;
+        subjectCharts[subject] = new Chart(ctx, chartOptions);
+      });
     }
 
+    // Helper function to prevent rapid multiple taps
+    function handleTap(button, callback) {
+      button.disabled = true;
+      callback();
+      setTimeout(() => {
+        button.disabled = false;
+      }, 300);
+    }
+
+    function markAttendance(btn, status) {
+      handleTap(btn, function() {
+        const card = btn.closest('.subject-card');
+        const attended = card.querySelector('.attended');
+        const total = card.querySelector('.total');
+        if (status === 'present') {
+          attended.textContent = parseInt(attended.textContent) + 1;
+        }
+        total.textContent = parseInt(total.textContent) + 1;
+        updatePercentages(card);
+        showMarkingStatus(card);
+      });
+    }
+
+    function decrementAttended(btn) {
+      const card = btn.closest('.subject-card');
+      const attended = card.querySelector('.attended');
+      if (parseInt(attended.textContent) > 0) {
+        attended.textContent = parseInt(attended.textContent) - 1;
+        updatePercentages(card);
+      }
+    }
+
+    function decrementTotal(btn) {
+      const card = btn.closest('.subject-card');
+      const total = card.querySelector('.total');
+      const attended = card.querySelector('.attended');
+      const currentTotal = parseInt(total.textContent);
+      if (currentTotal > 0) {
+        total.textContent = currentTotal - 1;
+        if (parseInt(attended.textContent) > currentTotal - 1) {
+          attended.textContent = currentTotal - 1;
+        }
+        updatePercentages(card);
+      }
+    }
+
+    function updatePercentages(card) {
+      const attended = parseInt(card.querySelector('.attended').textContent);
+      const total = parseInt(card.querySelector('.total').textContent);
+      const percentage = total > 0 ? (attended / total * 100).toFixed(0) : 0;
+      card.querySelector('.progress-value').textContent = `${percentage}%`;
+      const subject = card.dataset.subject;
+      updateSubjectChart(subject, percentage);
+      updateOverallAttendance();
+      saveData();
+    }
+
+    function updateSubjectChart(subject, percentage) {
+      const chart = subjectCharts[subject];
+      chart.data.datasets[0].data = [percentage, 100 - percentage];
+      chart.data.datasets[0].backgroundColor = [
+        percentage >= 75 ? '#22c55e' : percentage >= 55 ? '#eab308' : '#ef4444',
+        '#27272a'
+      ];
+      chart.update();
+    }
+
+    function updateOverallAttendance() {
+      let totalAttended = 0;
+      let totalLectures = 0;
+      document.querySelectorAll('.subject-card').forEach(card => {
+        totalAttended += parseInt(card.querySelector('.attended').textContent);
+        totalLectures += parseInt(card.querySelector('.total').textContent);
+      });
+      const overallPercentage = totalLectures > 0 ? (totalAttended / totalLectures * 100).toFixed(0) : 0;
+      overallChart.data.datasets[0].data = [overallPercentage, 100 - overallPercentage];
+      overallChart.data.datasets[0].backgroundColor = [
+        overallPercentage >= 75 ? '#22c55e' : overallPercentage >= 55 ? '#eab308' : '#ef4444',
+        '#27272a'
+      ];
+      overallChart.update();
+      document.querySelector('.overall-progress .progress-value').textContent = `${overallPercentage}%`;
+      document.getElementById('totalLectures').textContent = `total lectures: ${totalLectures}`;
+      document.getElementById('totalAttended').textContent = `total attended: ${totalAttended}`;
+      updateMedicalAttendanceMessage();
+    }
+
+    function markAllPresent() {
+      document.querySelectorAll('.subject-card').forEach(card => {
+        const attended = card.querySelector('.attended');
+        const total = card.querySelector('.total');
+        attended.textContent = parseInt(attended.textContent) + 1;
+        total.textContent = parseInt(total.textContent) + 1;
+        updatePercentages(card);
+      });
+    }
+
+    function markAllAbsent() {
+      document.querySelectorAll('.subject-card').forEach(card => {
+        const total = card.querySelector('.total');
+        total.textContent = parseInt(total.textContent) + 1;
+        updatePercentages(card);
+      });
+    }
+
+    function markMedical() {
+      const todayStr = new Date().toISOString().split('T')[0];
+      addMedicalDate(todayStr);
+    }
+
+    function editSubjectName(element) {
+      const currentName = element.textContent;
+      const newName = prompt('Enter new subject name:', currentName);
+      if (newName && newName.trim() !== '') {
+        element.textContent = newName.trim();
+        saveData();
+      }
+    }
+
+    function saveData() {
+      const data = {};
+      document.querySelectorAll('.subject-card').forEach(card => {
+        const subject = card.dataset.subject;
+        data[subject] = {
+          name: card.querySelector('.subject-title').textContent,
+          attended: card.querySelector('.attended').textContent,
+          total: card.querySelector('.total').textContent
+        };
+      });
+      localStorage.setItem('attendanceData', JSON.stringify(data));
+    }
+
+    // Save the medical dates as raw YYYY-MM-DD strings.
     function saveMedicalDates() {
-        const dates = Array.from(document.querySelectorAll('#medicalDatesList li span'))
-            .map(span => span.textContent);
-        localStorage.setItem('medicalDates', JSON.stringify(dates));
+      const dates = Array.from(document.querySelectorAll('#medicalDatesList li'))
+        .map(li => li.getAttribute('data-date'));
+      localStorage.setItem('medicalDates', JSON.stringify(dates));
     }
 
+    // Adds a medical date while preventing duplicates.
+    function addMedicalDate(dateStr) {
+      const exists = Array.from(document.querySelectorAll('#medicalDatesList li'))
+        .some(li => li.getAttribute('data-date') === dateStr);
+      if (exists) {
+        alert("This date has already been added.");
+        return;
+      }
+      const list = document.getElementById('medicalDatesList');
+      const li = document.createElement('li');
+      li.setAttribute('data-date', dateStr);
+      const dateSpan = document.createElement('span');
+      dateSpan.textContent = new Date(dateStr).toLocaleDateString();
+      const deleteBtn = document.createElement('button');
+      deleteBtn.textContent = '×';
+      deleteBtn.className = 'delete-date';
+      deleteBtn.onclick = function() {
+        li.remove();
+        saveMedicalDates();
+        updateMedicalAttendanceMessage();
+      };
+      li.appendChild(dateSpan);
+      li.appendChild(deleteBtn);
+      list.appendChild(li);
+      saveMedicalDates();
+      updateMedicalAttendanceMessage();
+    }
+
+    function addPastMedicalDate() {
+      const dateInput = document.getElementById('medicalDateInput');
+      if (!dateInput.value) {
+        alert("Please select a date");
+        return;
+      }
+      addMedicalDate(dateInput.value);
+      dateInput.value = "";
+    }
+
+    function updateMedicalAttendanceMessage() {
+      let totalAttended = 0;
+      let totalLectures = 0;
+      document.querySelectorAll('.subject-card').forEach(card => {
+        totalAttended += parseInt(card.querySelector('.attended').textContent);
+        totalLectures += parseInt(card.querySelector('.total').textContent);
+      });
+      const medicalDatesCount = document.querySelectorAll('#medicalDatesList li').length;
+      let newAttendance = 0;
+      if (totalLectures > 0) {
+        newAttendance = ((totalAttended + 5 * medicalDatesCount) / totalLectures * 100).toFixed(0);
+      }
+      document.getElementById('medicalAttendanceMessage').textContent =
+        `after submitting medicals, your attendance would be: ${newAttendance}%`;
+    }
+
+    // Toggle the medical dates container and update the toggle button text.
     document.querySelector('.medical-toggle-btn').addEventListener('click', function() {
-        const container = document.querySelector('.medical-dates-container');
-        const isHidden = container.style.display === 'none';
-        container.style.display = isHidden ? 'block' : 'none';
-     this.textContent = isHidden ? 'Hide Medical Dates' : 'Show Medical Dates';
+      const container = document.querySelector('.medical-dates-container');
+      const isHidden = container.style.display === 'none';
+      container.style.display = isHidden ? 'block' : 'none';
+      this.textContent = isHidden ? 'hide medical dates' : 'show medical dates';
+    });
+
+    function isToday(date) {
+      const today = new Date();
+      return date.getDate() === today.getDate() &&
+             date.getMonth() === today.getMonth() &&
+             date.getFullYear() === today.getFullYear();
     }
-);
-    
-// Function to check if a date is today
-function isToday(date) {
-    const today = new Date();
-    return date.getDate() === today.getDate() &&
-        date.getMonth() === today.getMonth() &&
-        date.getFullYear() === today.getFullYear();
-}
 
-// Function to show marking status
-function showMarkingStatus(card) {
-    const markingStatus = card.querySelector('.marking-status');
-    markingStatus.classList.add('visible');
-    
-    // Save the marking timestamp
-    const subject = card.dataset.subject;
-    const markings = JSON.parse(localStorage.getItem('markingTimestamps') || '{}');
-    markings[subject] = new Date().toISOString();
-    localStorage.setItem('markingTimestamps', JSON.stringify(markings));
-}
+    function showMarkingStatus(card) {
+      const markingStatus = card.querySelector('.marking-status');
+      markingStatus.classList.add('visible');
+      const subject = card.dataset.subject;
+      const markings = JSON.parse(localStorage.getItem('markingTimestamps') || '{}');
+      markings[subject] = new Date().toISOString();
+      localStorage.setItem('markingTimestamps', JSON.stringify(markings));
+    }
 
-// Function to check and reset markings
-function checkAndResetMarkings() {
-    const markings = JSON.parse(localStorage.getItem('markingTimestamps') || '{}');
-    const markingStatuses = document.querySelectorAll('.marking-status');
-    
-    Object.entries(markings).forEach(([subject, timestamp]) => {
+    function checkAndResetMarkings() {
+      const markings = JSON.parse(localStorage.getItem('markingTimestamps') || '{}');
+      const markingStatuses = document.querySelectorAll('.marking-status');
+      Object.entries(markings).forEach(([subject, timestamp]) => {
         const date = new Date(timestamp);
         const card = document.querySelector(`[data-subject="${subject}"]`);
-        const markingStatus = card?.querySelector('.marking-status');
-        
+        const markingStatus = card ? card.querySelector('.marking-status') : null;
         if (markingStatus && isToday(date)) {
-            markingStatus.classList.add('visible');
+          markingStatus.classList.add('visible');
         } else {
-            markingStatus?.classList.remove('visible');
+          markingStatus && markingStatus.classList.remove('visible');
         }
-    });
-}
-
-// Modify markAttendance function to include marking status
-function markAttendance(btn, status) {
-    const card = btn.closest('.subject-card');
-    const attended = card.querySelector('.attended');
-    const total = card.querySelector('.total');
-
-    if (status === 'present') {
-        attended.textContent = parseInt(attended.textContent) + 1;
+      });
     }
-    total.textContent = parseInt(total.textContent) + 1;
 
-    updatePercentages(card);
-    showMarkingStatus(card); // Add this line
-}
-
-// Check markings on page load and set up daily reset
-window.addEventListener('load', () => {
-    checkAndResetMarkings();
-    
-    // Check every minute if we need to reset markings
-    setInterval(() => {
+    window.addEventListener('load', () => {
+      checkAndResetMarkings();
+      setInterval(() => {
         const now = new Date();
         if (now.getHours() === 0 && now.getMinutes() === 0) {
-            const markingStatuses = document.querySelectorAll('.marking-status');
-            markingStatuses.forEach(status => status.classList.remove('visible'));
-            localStorage.removeItem('markingTimestamps');
+          document.querySelectorAll('.marking-status').forEach(status => status.classList.remove('visible'));
+          localStorage.removeItem('markingTimestamps');
         }
-    }, 60000); // Check every minute
-});
-</script>
+      }, 60000);
+    });
+
+    // Store the baseline attendance data for today.
+    function setBaselineAttendanceData() {
+      const today = new Date().toISOString().split('T')[0];
+      const storedBaseline = localStorage.getItem('baselineAttendanceData');
+      if (storedBaseline) {
+        const baselineData = JSON.parse(storedBaseline);
+        if (baselineData.date === today) {
+          return; // Already set for today.
+        }
+      }
+      const baselineData = { date: today, subjects: {} };
+      document.querySelectorAll('.subject-card').forEach(card => {
+        const subject = card.dataset.subject;
+        baselineData.subjects[subject] = {
+          attended: parseInt(card.querySelector('.attended').textContent),
+          total: parseInt(card.querySelector('.total').textContent)
+        };
+      });
+      localStorage.setItem('baselineAttendanceData', JSON.stringify(baselineData));
+    }
+
+    // Reset all markings done today and restore subject tallies to the baseline.
+    function resetTodayAttendance() {
+      const baselineDataStr = localStorage.getItem('baselineAttendanceData');
+      if (!baselineDataStr) {
+        alert("No baseline data found.");
+        return;
+      }
+      const baselineData = JSON.parse(baselineDataStr);
+      const today = new Date().toISOString().split('T')[0];
+      if (baselineData.date !== today) {
+        alert("Baseline data is not for today.");
+        return;
+      }
+      document.querySelectorAll('.subject-card').forEach(card => {
+        const subject = card.dataset.subject;
+        if (baselineData.subjects[subject]) {
+          card.querySelector('.attended').textContent = baselineData.subjects[subject].attended;
+          card.querySelector('.total').textContent = baselineData.subjects[subject].total;
+          updatePercentages(card);
+        }
+      });
+      // Remove marking statuses.
+      document.querySelectorAll('.marking-status').forEach(status => {
+        status.classList.remove('visible');
+      });
+      localStorage.removeItem('markingTimestamps');
+      alert("Attendance for today has been reset to baseline.");
+    }
+
+    function loadData() {
+      const savedData = localStorage.getItem('attendanceData');
+      if (savedData) {
+        const data = JSON.parse(savedData);
+        Object.entries(data).forEach(([subject, values]) => {
+          const card = document.querySelector(`[data-subject="${subject}"]`);
+          if (card) {
+            card.querySelector('.subject-title').textContent = values.name;
+            card.querySelector('.attended').textContent = values.attended;
+            card.querySelector('.total').textContent = values.total;
+            updatePercentages(card);
+          }
+        });
+      }
+      const savedDates = localStorage.getItem('medicalDates');
+      if (savedDates) {
+        const dates = JSON.parse(savedDates);
+        const list = document.getElementById('medicalDatesList');
+        dates.forEach(dateStr => {
+          const li = document.createElement('li');
+          li.setAttribute('data-date', dateStr);
+          const dateSpan = document.createElement('span');
+          dateSpan.textContent = new Date(dateStr).toLocaleDateString();
+          const deleteBtn = document.createElement('button');
+          deleteBtn.textContent = '×';
+          deleteBtn.className = 'delete-date';
+          deleteBtn.onclick = function() {
+            li.remove();
+            saveMedicalDates();
+            updateMedicalAttendanceMessage();
+          };
+          li.appendChild(dateSpan);
+          li.appendChild(deleteBtn);
+          list.appendChild(li);
+        });
+      }
+      updateMedicalAttendanceMessage();
+    }
+    
+    // Prevent touchmove default behavior to minimize page shifting on rapid taps
+    document.addEventListener('touchmove', function(e) {
+      e.preventDefault();
+    }, { passive: false });
+  </script>
 </body>
-</html
+</html>
