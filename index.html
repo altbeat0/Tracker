@@ -145,16 +145,20 @@
       gap: 10px;
       align-items: center;
     }
+
     .attendance-btn {
-      padding: 8px 16px;
-      border: none;
-      border-radius: 20px;
-      color: white;
-      cursor: pointer;
-      font-size: 14px;
-      transition: opacity 0.2s;
-      user-select: none;
-    }
+  padding: 8px 16px;
+  border: none;
+  border-radius: 20px;
+  color: white;
+  cursor: pointer;
+  font-size: 16px; /* Increase from 14px to 16px */
+  transition: opacity 0.2s;
+  user-select: none;
+  touch-action: manipulation; /* Helps prevent double-tap zoom */
+}
+
+
     .attendance-btn.present {
       background-color: #22c55e;
     }
