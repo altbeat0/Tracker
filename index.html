@@ -68,6 +68,7 @@
       color: #ffffff;
       font-size: 85%;
       text-align: center;
+      line-height: 1.5;
     }
 
     .action-buttons {
@@ -638,12 +639,12 @@
           // Additional lectures that must be attended to reach 75%
           let needAttend = Math.ceil(3 * totalLectures - 4 * totalAttended);
           if (needAttend < 0) needAttend = 0;
-          hintText = `you need to attend ${needAttend} more lecture${needAttend === 1 ? '' : 's'} to reach 75%`;
+          hintText = `you need to attend ${needAttend} more lecture${needAttend === 1 ? '' : 's'} to reach 75%.`;
         } else {
           // Additional lectures that must be attended to reach 55%
           let needAttend = Math.ceil((0.55 * totalLectures - totalAttended) / 0.45);
           if (needAttend < 0) needAttend = 0;
-          hintText = `you need to attend ${needAttend} more lecture${needAttend === 1 ? '' : 's'} to reach 55% attendance.`;
+          hintText = `you need to attend ${needAttend} more lecture${needAttend === 1 ? '' : 's'} to reach 55%.`;
         }
       }
       document.getElementById('attendanceHint').textContent = hintText;
