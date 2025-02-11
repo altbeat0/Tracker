@@ -63,7 +63,7 @@
     .attendance-tally-line {
         display: flex;
       justify-content: center;
-      margin-bottom: 20px;
+      margin-bottom: 12px;
       font-size: 18px;
       color: #ffffff;
       font-size: 85%;
@@ -74,9 +74,10 @@
     .action-buttons {
       display: flex;
       gap: 10px;
-      margin-bottom: 30px;
+      margin-bottom: 20px;
       justify-content: center;
-
+      transform: scale(0.875); /* scales 16px down to about 14px */
+      transform-origin: center;
     }
     .btn {
       padding: 8px 16px;
@@ -84,7 +85,7 @@
       border-radius: 20px;
       color: white;
       cursor: pointer;
-      font-size: 13px;
+      font-size: 16px;
       transition: opacity 0.2s;
     }
     .btn:hover {
@@ -124,6 +125,7 @@
     }
     .stat-label {
       color: #a1a1aa;
+      font-size: 16px;
     }
     .minus-btn {
       background-color: #ef4444;
